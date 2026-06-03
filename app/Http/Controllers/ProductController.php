@@ -33,16 +33,29 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'price' => ['required', 'integer', 'min:0'],
+            'name'        => ['required', 'string', 'min:4', 'max:255'],
+            'price'       => ['required', 'integer', 'min:1000000'],
             'description' => ['nullable', 'string'],
         ]);
 
-        $product = Product::create($validated);
+        $product = new Product();
+        $product->name  = $validated['name'];
+        $product->price = $validated['price'];
+        if (isset($validated['description'])) {
+            $product->description = $validated['description'];
+        }
+        $product->save();
 
-        return response()->json([
-            'data' => $product->only(['id', 'name', 'price', 'description']),
-        ], 201);
+        // Jika request berasal dari route API (segment pertama URL adalah 'api')
+        if ($request->segment(1) === 'api') {
+            return response()->json([
+                'error'   => false,
+                'message' => 'Produk berhasil ditambah',
+            ], 200);
+        }
+
+        // Jika dari web, redirect seperti biasa
+        return redirect('/produk')->with('success', 'Produk berhasil ditambah');
     }
 
     /**
